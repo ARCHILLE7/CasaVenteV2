@@ -1,0 +1,6 @@
+{
+  "name": "CasaVente",
+  "description": "Plateforme e-commerce marocaine basée à Casablanca — Électronique, Informatique, Maison, Mode, Beauté et Sport. Livraison partout au Maroc et paiement à la livraison.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
