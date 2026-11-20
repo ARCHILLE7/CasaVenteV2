@@ -190,6 +190,14 @@ db.exec(`
   );
 `);
 
+// Ensure any previously seeded or saved image paths resolve via /images/* in production builds
+db.exec(`
+  UPDATE products SET images_json = REPLACE(images_json, '/src/assets/images/', '/images/') WHERE images_json LIKE '%/src/assets/images/%';
+  UPDATE categories SET image_url = REPLACE(image_url, '/src/assets/images/', '/images/') WHERE image_url LIKE '%/src/assets/images/%';
+  UPDATE banners SET image_url = REPLACE(image_url, '/src/assets/images/', '/images/') WHERE image_url LIKE '%/src/assets/images/%';
+  UPDATE order_items SET product_image = REPLACE(product_image, '/src/assets/images/', '/images/') WHERE product_image LIKE '%/src/assets/images/%';
+`);
+
 export function mapProductRow(row: Record<string, unknown>) {
   return {
     ...row,

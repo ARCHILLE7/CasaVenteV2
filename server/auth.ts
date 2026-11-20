@@ -1,12 +1,56 @@
+import 'dotenv/config';
 import crypto from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from './db.ts';
 
-const RUNTIME_SECRET =
-  process.env.JWT_SECRET && process.env.JWT_SECRET !== 'CHANGE_ME_TO_A_LONG_RANDOM_SECRET'
-    ? process.env.JWT_SECRET
-    : crypto.randomBytes(32).toString('hex');
+const FALLBACK_JWT_SECRET = crypto.randomBytes(64).toString('hex');
+const FALLBACK_SESSION_SECRET = crypto.randomBytes(64).toString('hex');
+const FALLBACK_CSRF_SECRET = crypto.randomBytes(32).toString('hex');
+
+function isConfiguredSecret(value: string | undefined): value is string {
+  return Boolean(
+    value &&
+      value.trim().length >= 32 &&
+      !value.startsWith('CHANGE_ME') &&
+      !value.startsWith('YOUR_') &&
+      !value.startsWith('MY_')
+  );
+}
+
+export function getJwtSecret(): string {
+  const s = process.env.JWT_SECRET;
+  return isConfiguredSecret(s) ? s : FALLBACK_JWT_SECRET;
+}
+
+export function getSessionSecret(): string {
+  const s = process.env.SESSION_SECRET;
+  return isConfiguredSecret(s) ? s : FALLBACK_SESSION_SECRET;
+}
+
+export function getCsrfSecret(): string {
+  const s = process.env.CSRF_SECRET;
+  return isConfiguredSecret(s) ? s : FALLBACK_CSRF_SECRET;
+}
+
+export function generateCsrfToken(seed: string): string {
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const payload = `${seed}:${nonce}`;
+  const sig = crypto.createHmac('sha256', getCsrfSecret()).update(payload).digest('hex');
+  return `${payload}:${sig}`;
+}
+
+export function verifyCsrfToken(token: string, expectedSeed: string): boolean {
+  const parts = token.split(':');
+  if (parts.length !== 3) return false;
+  const [seed, nonce, sig] = parts;
+  if (seed !== expectedSeed || !nonce || !sig) return false;
+  const expectedSig = crypto.createHmac('sha256', getCsrfSecret()).update(`${seed}:${nonce}`).digest('hex');
+  const a = Buffer.from(sig, 'hex');
+  const b = Buffer.from(expectedSig, 'hex');
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
 
 export const AUTH_COOKIE_NAME = 'casavente_session';
 
@@ -21,12 +65,12 @@ export interface AuthedRequest extends Request {
 }
 
 export function signAuthToken(payload: AuthPayload): string {
-  return jwt.sign(payload, RUNTIME_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: '7d', algorithm: 'HS256' });
 }
 
 export function verifyAuthToken(token: string): AuthPayload | null {
   try {
-    return jwt.verify(token, RUNTIME_SECRET) as AuthPayload;
+    return jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as AuthPayload;
   } catch {
     return null;
   }

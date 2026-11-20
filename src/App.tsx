@@ -1,4 +1,5 @@
 import { CartDrawer } from './components/CartDrawer';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import { StoreProvider, useStore } from './context/StoreContext';
@@ -51,15 +52,17 @@ function AppRouter() {
 
 export default function App() {
   return (
-    <StoreProvider>
-      <div className="min-h-screen flex flex-col bg-white text-slate-900">
-        <Navbar />
-        <CartDrawer />
-        <main className="flex-1">
-          <AppRouter />
-        </main>
-        <Footer />
-      </div>
-    </StoreProvider>
+    <ErrorBoundary>
+      <StoreProvider>
+        <div className="min-h-screen flex flex-col bg-white text-slate-900">
+          <Navbar />
+          <CartDrawer />
+          <main className="flex-1">
+            <AppRouter />
+          </main>
+          <Footer />
+        </div>
+      </StoreProvider>
+    </ErrorBoundary>
   );
 }

@@ -1,15 +1,16 @@
+import 'dotenv/config';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
-import { createServer as createViteServer } from 'vite';
 import {
   AUTH_COOKIE_NAME,
   attachOptionalUser,
+  generateCsrfToken,
+  getSessionSecret,
   requireAdmin,
   requireAuth,
   setSessionCookie,
@@ -32,14 +33,14 @@ import {
   reviewCreateSchema,
 } from './server/validation.ts';
 
-dotenv.config();
-
 seedDatabase();
 
 const uploadsDir = path.resolve('uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+const publicImagesDir = path.resolve('public', 'images');
+const distImagesDir = path.resolve('dist', 'images');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -52,10 +53,13 @@ app.use(
   })
 );
 app.use(express.json({ limit: '6mb' }));
-app.use(cookieParser());
+app.use(cookieParser(getSessionSecret()));
 app.use(attachOptionalUser);
 
 // Serve generated assets and uploaded product photos reliably in dev and production
+app.use('/images', express.static(publicImagesDir));
+app.use('/images', express.static(distImagesDir));
+app.use('/src/assets/images', express.static(publicImagesDir));
 app.use('/src/assets/images', express.static(path.resolve('src', 'assets', 'images')));
 app.use('/uploads', express.static(uploadsDir));
 
@@ -110,6 +114,11 @@ app.get('/sitemap.xml', (req, res) => {
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', store: 'CasaVente', currency: 'MAD' });
+});
+
+app.get('/api/auth/csrf', (req: AuthedRequest, res) => {
+  const seed = req.user ? `user-${req.user.userId}` : 'guest';
+  res.json({ csrfToken: generateCsrfToken(seed) });
 });
 
 app.get('/api/storefront', (_req, res) => {
@@ -1280,6 +1289,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 // ---------------------------------------------------------------------------
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

@@ -2,14 +2,14 @@ import bcrypt from 'bcryptjs';
 import { db } from './db.ts';
 
 const IMG = {
-  hero: '/src/assets/images/hero_casavente_showcase_1794670919753.jpg',
-  laptop: '/src/assets/images/prod_tech_laptop_1794670919612.jpg',
-  audio: '/src/assets/images/prod_audio_headphones_1794670919671.jpg',
-  phone: '/src/assets/images/prod_smartphone_pro_1794670920788.jpg',
-  espresso: '/src/assets/images/prod_home_espresso_1794670921290.jpg',
-  fashion: '/src/assets/images/prod_fashion_bag_1794670921673.jpg',
-  beauty: '/src/assets/images/prod_beauty_argan_1794670922634.jpg',
-  sport: '/src/assets/images/prod_sport_gear_1794670923141.jpg',
+  hero: '/images/hero_casavente_showcase_1794670919753.jpg',
+  laptop: '/images/prod_tech_laptop_1794670919612.jpg',
+  audio: '/images/prod_audio_headphones_1794670919671.jpg',
+  phone: '/images/prod_smartphone_pro_1794670920788.jpg',
+  espresso: '/images/prod_home_espresso_1794670921290.jpg',
+  fashion: '/images/prod_fashion_bag_1794670921673.jpg',
+  beauty: '/images/prod_beauty_argan_1794670922634.jpg',
+  sport: '/images/prod_sport_gear_1794670923141.jpg',
 };
 
 export function seedDatabase() {

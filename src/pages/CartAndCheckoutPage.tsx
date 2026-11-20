@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { SmartImage } from '../components/SmartImage';
 import { useStore } from '../context/StoreContext';
 import { apiFetch } from '../lib/api';
+import { syncOrderToFirestore } from '../lib/firebase';
 import { formatMad, MOROCCAN_CITIES } from '../lib/i18n';
 import type { Address, DeliveryMode, Order, PaymentMethod } from '../types';
 
@@ -204,6 +205,7 @@ export function CheckoutPage() {
     cartSubtotal,
     clearCart,
     user,
+    firebaseUser,
     shippingZones,
     onlineGatewayConfigured,
     navigate,
@@ -320,6 +322,13 @@ export function CheckoutPage() {
         }),
       });
       setConfirmedOrder(res.order);
+      if (firebaseUser && firebaseUser.emailVerified) {
+        try {
+          await syncOrderToFirestore(firebaseUser.uid, res.order);
+        } catch {
+          // order already committed to backend; error logged via handleFirestoreError
+        }
+      }
       clearCart();
       setStep(6);
       notify(`Commande ${res.order.order_number} confirmée !`);

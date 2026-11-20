@@ -44,7 +44,7 @@ export function HomePage() {
           {
             id: 0,
             slug: '',
-            image: heroBanner?.image_url || '/src/assets/images/hero_casavente_showcase_1794670919753.jpg',
+            image: heroBanner?.image_url || '/images/hero_casavente_showcase_1794670919753.jpg',
             title: 'CasaVente Sélection Casablanca',
             brand: 'CasaVente',
             price_mad: 0,

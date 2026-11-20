@@ -1,0 +1,273 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "Product category in the CasaVente Morocco catalog",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "minLength": 2, "maxLength": 100, "pattern": "^[a-z0-9-]+$" },
+        "name_fr": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "name_ar": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "description_fr": { "type": "string", "maxLength": 500 },
+        "description_ar": { "type": "string", "maxLength": 500 },
+        "image_url": { "type": "string", "maxLength": 500 },
+        "sort_order": { "type": "number" },
+        "is_active": { "type": "boolean" }
+      },
+      "required": ["slug", "name_fr", "name_ar", "sort_order", "is_active"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Storefront product sold in MAD across Morocco",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "minLength": 2, "maxLength": 140, "pattern": "^[a-z0-9-]+$" },
+        "category_id": { "type": "number" },
+        "brand": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "sku": { "type": "string", "minLength": 2, "maxLength": 64 },
+        "name_fr": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "name_ar": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "short_desc_fr": { "type": "string", "maxLength": 400 },
+        "short_desc_ar": { "type": "string", "maxLength": 400 },
+        "price_mad": { "type": "number" },
+        "old_price_mad": { "type": "number" },
+        "stock": { "type": "number" },
+        "images": { "type": "array" },
+        "is_active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slug", "category_id", "brand", "sku", "name_fr", "name_ar", "price_mad", "stock", "images", "is_active", "updatedAt"]
+    },
+    "ProductReview": {
+      "title": "ProductReview",
+      "description": "Verified customer review for a product",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "author_name": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "minLength": 3, "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "userId", "author_name", "rating", "comment", "createdAt"]
+    },
+    "UserPublic": {
+      "title": "UserPublic",
+      "description": "Minimal non-PII public user profile",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "role": { "type": "string", "enum": ["CLIENT", "ADMIN"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "role", "createdAt"]
+    },
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Isolated PII profile owned by the user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "full_name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 24 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "full_name", "updatedAt"]
+    },
+    "UserAddress": {
+      "title": "UserAddress",
+      "description": "Saved Moroccan delivery address owned by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "full_name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 8, "maxLength": 24 },
+        "city": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "neighborhood": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "street_address": { "type": "string", "minLength": 4, "maxLength": 240 },
+        "is_default": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "label", "full_name", "phone", "city", "neighborhood", "street_address", "is_default", "createdAt"]
+    },
+    "WishlistItem": {
+      "title": "WishlistItem",
+      "description": "Product saved in a customer's cloud wishlist",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "productId": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "productId", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order with Moroccan delivery details and status",
+      "type": "object",
+      "properties": {
+        "order_number": { "type": "string", "minLength": 4, "maxLength": 40, "pattern": "^[A-Z0-9-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "customer_name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "customer_phone": { "type": "string", "minLength": 8, "maxLength": 24 },
+        "customer_email": { "type": "string", "format": "email", "maxLength": 160 },
+        "city": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "neighborhood": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "street_address": { "type": "string", "minLength": 4, "maxLength": 240 },
+        "delivery_mode": { "type": "string", "enum": ["STANDARD", "EXPRESS", "PICKUP_CASA"] },
+        "payment_method": { "type": "string", "enum": ["COD", "ONLINE_GATEWAY"] },
+        "status": {
+          "type": "string",
+          "enum": ["EN_ATTENTE", "CONFIRMEE", "EN_PREPARATION", "EXPEDIEE", "EN_COURS_LIVRAISON", "LIVREE", "ANNULEE"]
+        },
+        "subtotal_mad": { "type": "number" },
+        "shipping_mad": { "type": "number" },
+        "discount_mad": { "type": "number" },
+        "total_mad": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "order_number",
+        "userId",
+        "customer_name",
+        "customer_phone",
+        "customer_email",
+        "city",
+        "neighborhood",
+        "street_address",
+        "delivery_mode",
+        "payment_method",
+        "status",
+        "subtotal_mad",
+        "shipping_mad",
+        "discount_mad",
+        "total_mad",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "Line item stored inside an order subcollection",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "productId": { "type": "number" },
+        "product_name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "product_image": { "type": "string", "maxLength": 500 },
+        "variant_label": { "type": "string", "maxLength": 120 },
+        "quantity": { "type": "number" },
+        "unit_price_mad": { "type": "number" },
+        "line_total_mad": { "type": "number" }
+      },
+      "required": ["orderId", "userId", "productId", "product_name", "quantity", "unit_price_mad", "line_total_mad"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Homepage hero banner",
+      "type": "object",
+      "properties": {
+        "title_fr": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "title_ar": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "subtitle_fr": { "type": "string", "maxLength": 300 },
+        "subtitle_ar": { "type": "string", "maxLength": 300 },
+        "cta_link": { "type": "string", "maxLength": 200 },
+        "image_url": { "type": "string", "maxLength": 500 },
+        "is_active": { "type": "boolean" }
+      },
+      "required": ["title_fr", "title_ar", "cta_link", "image_url", "is_active"]
+    },
+    "ShippingZone": {
+      "title": "ShippingZone",
+      "description": "Moroccan city shipping fee and free threshold",
+      "type": "object",
+      "properties": {
+        "city": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "zone_name": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "fee_mad": { "type": "number" },
+        "free_threshold_mad": { "type": "number" },
+        "estimated_days": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["city", "zone_name", "fee_mad", "free_threshold_mad", "estimated_days"]
+    },
+    "AdminRole": {
+      "title": "AdminRole",
+      "description": "Trusted server-verified admin lookup record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "grantedAt"]
+    },
+    "ConnectionTest": {
+      "title": "ConnectionTest",
+      "description": "Health probe document for Firestore connection check",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["status"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Active catalog categories"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Storefront products"
+    },
+    "/products/{productId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ProductReview" },
+      "description": "Verified customer product reviews"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublic" },
+      "description": "Minimal user document without PII"
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivate" },
+      "description": "Private PII profile isolated per owner"
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": { "$ref": "#/entities/UserAddress" },
+      "description": "Saved Moroccan delivery addresses"
+    },
+    "/users/{userId}/wishlist/{productId}": {
+      "schema": { "$ref": "#/entities/WishlistItem" },
+      "description": "User favorite products"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders isolated by owner UID and admin"
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/OrderItem" },
+      "description": "Order line items subcollection gated by parent order"
+    },
+    "/banners/{bannerId}": {
+      "schema": { "$ref": "#/entities/Banner" },
+      "description": "Storefront promotional banners"
+    },
+    "/shippingZones/{zoneId}": {
+      "schema": { "$ref": "#/entities/ShippingZone" },
+      "description": "Moroccan city shipping zones"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRole" },
+      "description": "Authoritative admin role lookup collection"
+    },
+    "/test/{docId}": {
+      "schema": { "$ref": "#/entities/ConnectionTest" },
+      "description": "Startup connection validation probe"
+    }
+  }
+}

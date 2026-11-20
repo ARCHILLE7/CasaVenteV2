@@ -88,7 +88,7 @@ export function AdminDashboardPage() {
   const [catNameAr, setCatNameAr] = useState('');
   const [catParentId, setCatParentId] = useState<string>('');
   const [catDescFr, setCatDescFr] = useState('');
-  const [catImg, setCatImg] = useState('/src/assets/images/prod_audio_headphones_1794670919671.jpg');
+  const [catImg, setCatImg] = useState('/images/prod_audio_headphones_1794670919671.jpg');
 
   // Order detail & invoice modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -171,7 +171,7 @@ export function AdminDashboardPage() {
     setPPrice('490');
     setPOldPrice('');
     setPStock('10');
-    setPImages(['/src/assets/images/prod_audio_headphones_1794670919671.jpg']);
+    setPImages(['/images/prod_audio_headphones_1794670919671.jpg']);
     setPFeatured(false);
     setPBestseller(false);
     setPNew(true);
@@ -241,7 +241,7 @@ export function AdminDashboardPage() {
       price_mad: Number(pPrice),
       old_price_mad: pOldPrice ? Number(pOldPrice) : null,
       stock: Number(pStock),
-      images: pImages.length > 0 ? pImages : ['/src/assets/images/prod_tech_laptop_1794670919612.jpg'],
+      images: pImages.length > 0 ? pImages : ['/images/prod_tech_laptop_1794670919612.jpg'],
       is_featured: pFeatured,
       is_bestseller: pBestseller,
       is_new: pNew,
@@ -738,7 +738,7 @@ export function AdminDashboardPage() {
                     type="text"
                     value={pImageUrlInput}
                     onChange={(e) => setPImageUrlInput(e.target.value)}
-                    placeholder="/src/assets/images/..."
+                    placeholder="/images/..."
                     className="flex-1 h-9 px-3 border border-slate-200 rounded-lg text-xs"
                   />
                   <button

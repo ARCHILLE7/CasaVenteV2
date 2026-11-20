@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
 import { apiFetch } from '../lib/api';
+import { syncCatalogToFirestore } from '../lib/firebase';
 import { formatMad, MOROCCAN_CITIES, ORDER_STATUS_LABELS } from '../lib/i18n';
 import type { Address, Order, Product } from '../types';
 
@@ -10,7 +11,24 @@ type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 type AccountTab = 'orders' | 'addresses' | 'wishlist' | 'profile';
 
 export function AccountPage() {
-  const { lang, route, user, authLoading, login, register, logout, refreshUser, notify, navigate } = useStore();
+  const {
+    lang,
+    route,
+    user,
+    firebaseUser,
+    authLoading,
+    login,
+    register,
+    signInWithGoogle,
+    logout,
+    refreshUser,
+    categories,
+    banners,
+    shippingZones,
+    notify,
+    navigate,
+  } = useStore();
+  const [syncingCatalog, setSyncingCatalog] = useState(false);
 
   const urlParams = new URLSearchParams(route.split('?')[1] || '');
   const initialTab = (urlParams.get('tab') as AccountTab) || 'orders';
@@ -203,10 +221,67 @@ export function AccountPage() {
     return <div className="max-w-md mx-auto py-20 px-4 text-center text-slate-500">Chargement...</div>;
   }
 
+  const handleGoogleSignIn = async () => {
+    setAuthSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Erreur de connexion Google', 'error');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleSyncCatalog = async () => {
+    setSyncingCatalog(true);
+    try {
+      const res = await apiFetch<{ products: Product[] }>('/api/products?limit=100');
+      const count = await syncCatalogToFirestore(categories, res.products, banners, shippingZones);
+      notify(`${count} documents synchronisés dans Firestore`);
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'Échec de synchronisation Firestore', 'error');
+    } finally {
+      setSyncingCatalog(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="max-w-md mx-auto px-4 py-14">
         <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-6">
+          {firebaseUser && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">
+                    {lang === 'ar' ? 'حساب Google متصل' : 'Compte Google connecté'}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {firebaseUser.displayName || firebaseUser.email}
+                  </p>
+                  <p className="text-xs text-slate-600">{firebaseUser.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  Déconnexion
+                </button>
+              </div>
+              {firebaseUser.email === 'archillevladimir@gmail.com' && (
+                <button
+                  type="button"
+                  disabled={syncingCatalog}
+                  onClick={handleSyncCatalog}
+                  className="w-full h-9 rounded-lg bg-[#142B4A] text-white text-xs font-semibold hover:bg-[#0F213A] cursor-pointer"
+                >
+                  {syncingCatalog ? 'Synchronisation...' : 'Synchroniser le catalogue vers Firestore'}
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="flex border-b border-slate-200">
             <button
               type="button"
@@ -227,6 +302,17 @@ export function AccountPage() {
               Créer un compte
             </button>
           </div>
+
+          {!firebaseUser && (
+            <button
+              type="button"
+              disabled={authSubmitting}
+              onClick={handleGoogleSignIn}
+              className="w-full h-11 rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>{lang === 'ar' ? 'المتابعة عبر Google' : 'Continuer avec Google'}</span>
+            </button>
+          )}
 
           {authMode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">

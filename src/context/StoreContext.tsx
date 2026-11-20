@@ -1,5 +1,13 @@
+import { onAuthStateChanged, signInWithPopup, signOut, type User as FirebaseUser } from 'firebase/auth';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { apiFetch, setStoredToken } from '../lib/api';
+import {
+  auth,
+  googleProvider,
+  loadWishlistFromFirestore,
+  syncUserProfileToFirestore,
+  syncWishlistItemToFirestore,
+} from '../lib/firebase';
 import { translations } from '../lib/i18n';
 import type { Banner, CartItem, Category, Language, Product, ShippingZone, User } from '../types';
 
@@ -16,9 +24,11 @@ interface StoreContextValue {
   route: string;
   navigate: (to: string) => void;
   user: User | null;
+  firebaseUser: FirebaseUser | null;
   authLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (payload: { full_name: string; email: string; phone: string; password: string }) => Promise<User>;
+  signInWithGoogle: () => Promise<FirebaseUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   categories: Category[];
@@ -57,6 +67,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const [route, setRoute] = useState<string>(() => window.location.pathname + window.location.search);
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -159,6 +170,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser && fbUser.emailVerified) {
+        try {
+          await syncUserProfileToFirestore(fbUser);
+          const cloudWishlist = await loadWishlistFromFirestore(fbUser.uid);
+          if (cloudWishlist.length > 0) {
+            setWishlistIds((prev) => Array.from(new Set([...cloudWishlist, ...prev])));
+          }
+        } catch {
+          // structured error logged by handleFirestoreError
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
     refreshUser();
     apiFetch<{
       banners: Banner[];
@@ -213,10 +242,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [lang, notify]
   );
 
+  const signInWithGoogle = useCallback(async () => {
+    const cred = await signInWithPopup(auth, googleProvider);
+    setFirebaseUser(cred.user);
+    if (cred.user.emailVerified) {
+      try {
+        await syncUserProfileToFirestore(cred.user);
+      } catch {
+        // logged via handleFirestoreError
+      }
+    }
+    notify(
+      lang === 'ar'
+        ? 'تم تسجيل الدخول عبر Google بنجاح'
+        : `Connecté avec Google (${cred.user.displayName || cred.user.email})`
+    );
+    return cred.user;
+  }, [lang, notify]);
+
   const logout = useCallback(async () => {
     await apiFetch('/api/auth/logout', { method: 'POST' });
+    if (auth.currentUser) {
+      await signOut(auth).catch(() => {});
+    }
     setStoredToken(null);
     setUser(null);
+    setFirebaseUser(null);
     notify(lang === 'ar' ? 'تم تسجيل الخروج' : 'Vous êtes déconnecté', 'info');
   }, [lang, notify]);
 
@@ -302,8 +353,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             await apiFetch(`/api/account/wishlist/${productId}`, { method: 'POST' });
           }
         } catch {
-          // revert on failure
           setWishlistIds((prev) => (exists ? [productId, ...prev] : prev.filter((id) => id !== productId)));
+        }
+      }
+      if (firebaseUser && firebaseUser.emailVerified) {
+        try {
+          await syncWishlistItemToFirestore(firebaseUser.uid, productId, !exists);
+        } catch {
+          // logged by handleFirestoreError
         }
       }
       notify(
@@ -317,7 +374,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         'info'
       );
     },
-    [lang, notify, user, wishlistIds]
+    [firebaseUser, lang, notify, user, wishlistIds]
   );
 
   const recordViewed = useCallback((productId: number) => {
@@ -338,9 +395,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     route,
     navigate,
     user,
+    firebaseUser,
     authLoading,
     login,
     register,
+    signInWithGoogle,
     logout,
     refreshUser,
     categories,
